@@ -42,7 +42,7 @@ SPD-R introduces a supervisory abstraction layer above cloud infrastructure that
 
 
 
-ogle Cloud sandbox environment (conceptual POC setup)
+Google Cloud sandbox environment (conceptual POC setup)
 
 ---
 

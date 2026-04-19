@@ -17,14 +17,14 @@ This project demonstrates how supervisory overlay logic can be applied to observ
 
 ---
 
-## System Concept
-
+## System Concept                   
+This POC is intentionally designed as a documentation-first architecture model, focusing on system reasoning, dependency structure, and supervisory logic rather than visual diagrams or implementation artifacts.
 SPD-R introduces a supervisory abstraction layer above cloud infrastructure that focuses on:
 
 - Dependency visibility  
 - Failure propagation tracking  
 - Observability enhancement  
-- Resilience scoring logic  
+- Resilience scoringtracking
 
 ---
 
@@ -38,9 +38,11 @@ SPD-R introduces a supervisory abstraction layer above cloud infrastructure that
 
 ---
 
-## Intended Environment
+## Intended Concept
 
-Google Cloud sandbox environment (conceptual POC setup)
+
+
+ogle Cloud sandbox environment (conceptual POC setup)
 
 ---
 

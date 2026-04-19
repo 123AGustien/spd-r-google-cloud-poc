@@ -1,0 +1,12 @@
+## Evaluation Integration Considerations
+
+For structured evaluation of the simulation framework, the following technical alignment points are typically required:
+
+- Defined technical point of contact for coordination and testing  
+- Clearly scoped use case or system scenario for simulation  
+- Access to a controlled or sandbox environment (e.g., Google Cloud)  
+- Relevant system architecture context (dependency structure, topology, service mapping)  
+- Agreed evaluation criteria for resilience and failure propagation analysis  
+- High-level timeline for iterative testing and review  
+
+These inputs ensure accurate mapping of system dependencies and consistent evaluation of the supervisory resilience model.

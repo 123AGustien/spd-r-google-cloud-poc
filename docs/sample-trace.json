@@ -1,0 +1,37 @@
+{
+  "id": "trace-root-001",
+  "parent_id": null,
+  "timestamp": "2026-04-06T10:00:00Z",
+  "event_type": "invoice.created",
+  "payload": {
+    "id": "inv-001",
+    "amount": 10000,
+    "status": "pending"
+  },
+  "children": [
+    {
+      "id": "trace-child-001",
+      "parent_id": "trace-root-001",
+      "timestamp": "2026-04-06T10:01:00Z",
+      "event_type": "invoice.paid",
+      "payload": {
+        "id": "inv-001",
+        "status": "paid",
+        "paid_amount": 10000
+      },
+      "children": [
+        {
+          "id": "trace-child-002",
+          "parent_id": "trace-child-001",
+          "timestamp": "2026-04-06T10:02:00Z",
+          "event_type": "payment.settled",
+          "payload": {
+            "id": "pay-001",
+            "status": "settled"
+          },
+          "children": []
+        }
+      ]
+    }
+  ]
+}

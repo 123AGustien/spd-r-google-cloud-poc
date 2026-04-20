@@ -100,18 +100,3 @@ Proof of Concept – Early Stage Architecture Validation
 
 ---
 
-## 💾 STEP 5 — Scroll down
-
-You will see:
-
-👉 “Commit changes”
-
----
-
-## 📝 STEP 6 — Commit message
-
-Write:
-
-```text id="commitreadme1"
-Refactor README into structured POC overview for evaluation clarity
-

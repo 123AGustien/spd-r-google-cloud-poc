@@ -2,57 +2,116 @@
 
 ## Overview
 
-The Supervisory Protocol for Data Resilience (SPD-R) is a Proof of Concept designed to model system-level resilience, dependency mapping, and failure propagation within distributed cloud architectures.
+The Supervisory Protocol for Data Resilience (SPD-R) is a Proof of Concept designed to model system-level resilience, dependency propagation, and failure behavior in distributed cloud architectures.
 
-This project demonstrates how supervisory overlay logic can be applied to observe, analyze, and evaluate systemic behavior in a Google Cloud sandbox environment.
+It introduces a cascade trace model that captures how events flow through interconnected systems, enabling deterministic analysis of system behavior under controlled conditions.
 
----
-
-## Core Objectives
-
-- Map inter-service dependencies in cloud architectures  
-- Simulate failure propagation across connected systems  
-- Introduce supervisory observability logic (SPD-R layer)  
-- Evaluate resilience behavior under controlled stress scenarios  
+This project is intended for sandbox-based evaluation only.
 
 ---
 
-## System Concept                   
-This POC is intentionally designed as a documentation-first architecture model, focusing on system reasoning, dependency structure, and supervisory logic rather than visual diagrams or implementation artifacts.
-SPD-R introduces a supervisory abstraction layer above cloud infrastructure that focuses on:
+## Core Capabilities
 
-- Dependency visibility  
-- Failure propagation tracking  
-- Observability enhancement  
-- Resilience scoringtracking
+### Event Simulation API
+A REST API that processes synthetic events and returns deterministic responses.
 
----
-
-## Architecture Components
-
-- Dependency Graph Model  
-- Failure Injection Simulation Layer  
-- Observability & Logging Layer (conceptual integration)  
-- Supervisory Control Engine (SPD-R Core)  
-- Resilience Evaluation Framework  
+Endpoint:
+POST /v1/simulate
 
 ---
 
-## Intended Concept
+### Cascade Trace Model
+The system supports hierarchical event relationships where each event can generate downstream dependent events.
 
+Example:
+- invoice.created → invoice.paid → payment.settled
 
-
-Google Cloud sandbox environment (conceptual POC setup)
-
----
-
-## Status
-
-Proof of Concept – Early Stage System Design
+See: /docs/sample-trace.json
 
 ---
 
-## Contact
+### Deterministic Processing
+Identical inputs produce consistent outputs for reproducible evaluation.
 
-Sextant Protocol  
-donweerasekera@gmail.com
+---
+
+## System Architecture
+
+- FastAPI backend
+- Stateless processing model
+- Optional SQLite trace storage (extended version)
+- Docker containerized deployment
+
+---
+
+## Tech Stack
+
+- Python 3.11
+- FastAPI
+- Uvicorn
+- Docker
+
+---
+
+## Run Instructions
+
+### Build
+docker build -t spd-r-api .
+
+### Run
+docker run -p 8000:8000 spd-r-api
+
+---
+
+## Example Request
+
+```json
+{
+  "event_id": "evt_001",
+  "input": {
+    "type": "simulation",
+    "value": 250
+  }
+}
+
+
+Example Response{
+  "status": "success",
+  "event_id": "evt_001",
+  "result": {
+    "processed": true,
+    "output_value": 250
+  }
+}
+
+
+
+Key Design Principles
+Stateless execution
+Deterministic behavior
+Synthetic data only
+Sandbox-safe architecture
+No production dependencies
+Supporting Artifacts
+/docs/sample-trace.json → Cascade trace example
+/docs/technical-appendix.md → Evaluation framework (optional)
+Status
+Proof of Concept – Early Stage Architecture Validation
+
+---
+
+## 💾 STEP 5 — Scroll down
+
+You will see:
+
+👉 “Commit changes”
+
+---
+
+## 📝 STEP 6 — Commit message
+
+Write:
+
+```text id="commitreadme1"
+Refactor README into structured POC overview for evaluation clarity
+

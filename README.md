@@ -60,6 +60,7 @@ Identical inputs produce consistent outputs for reproducible evaluation.
 
 ---
 
+Markdown
 ## Run Instructions
 
 ### Build
@@ -68,8 +69,7 @@ docker build -t spd-r-api .
 Run
 Bash
 docker run -p 8000:8000 spd-r-api
-Example
-Request
+Example Request
 JSON
 {
   "event_id": "evt_001",

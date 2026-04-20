@@ -1,10 +1,12 @@
 # SPD-R Google Cloud Proof of Concept
 
+---
+
 ## Overview
 
 The Supervisory Protocol for Data Resilience (SPD-R) is a Proof of Concept designed to model system-level resilience, dependency propagation, and failure behavior in distributed cloud architectures.
 
-It introduces a cascade trace model that captures how events flow through interconnected systems, enabling deterministic analysis of system behavior under controlled conditions.
+It introduces a cascade trace model that captures how events flow through interconnected systems, enabling deterministic analysis of system behavior under controlled sandbox conditions.
 
 This project is intended for sandbox-based evaluation only.
 
@@ -13,24 +15,29 @@ This project is intended for sandbox-based evaluation only.
 ## Core Capabilities
 
 ### Event Simulation API
+
 A REST API that processes synthetic events and returns deterministic responses.
 
-Endpoint:
+**Endpoint**  
 POST /v1/simulate
 
 ---
 
 ### Cascade Trace Model
+
 The system supports hierarchical event relationships where each event can generate downstream dependent events.
 
 Example:
-- invoice.created → invoice.paid → payment.settled
 
-See: /docs/sample-trace.json
+invoice.created → invoice.paid → payment.settled
+
+Reference:  
+`/docs/sample-trace.json`
 
 ---
 
 ### Deterministic Processing
+
 Identical inputs produce consistent outputs for reproducible evaluation.
 
 ---
@@ -56,16 +63,14 @@ Identical inputs produce consistent outputs for reproducible evaluation.
 ## Run Instructions
 
 ### Build
+```bash
 docker build -t spd-r-api .
-
-### Run
+Run
+Bash
 docker run -p 8000:8000 spd-r-api
-
----
-
-## Example Request
-
-```json
+Example
+Request
+JSON
 {
   "event_id": "evt_001",
   "input": {
@@ -73,9 +78,9 @@ docker run -p 8000:8000 spd-r-api
     "value": 250
   }
 }
-
-
-Example Response{
+Response
+JSON
+{
   "status": "success",
   "event_id": "evt_001",
   "result": {
@@ -83,9 +88,6 @@ Example Response{
     "output_value": 250
   }
 }
-
-
-
 Key Design Principles
 Stateless execution
 Deterministic behavior
@@ -94,9 +96,6 @@ Sandbox-safe architecture
 No production dependencies
 Supporting Artifacts
 /docs/sample-trace.json → Cascade trace example
-/docs/technical-appendix.md → Evaluation framework (optional)
+/docs/technical-appendix.md → Evaluation framework
 Status
 Proof of Concept – Early Stage Architecture Validation
-
----
-

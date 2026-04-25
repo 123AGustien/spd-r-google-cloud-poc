@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Any, Dict
 
-app = FastAPI()
+app = FastAPI(title="SPD-R Simulation API")
 
 class SimulationRequest(BaseModel):
     event_id: str
@@ -17,11 +17,11 @@ def simulate(request: SimulationRequest):
     if request.event_id in processed_events:
         return processed_events[request.event_id]
 
-    # Basic validation
+    # Validation
     if not request.input:
         raise HTTPException(status_code=400, detail="Invalid input")
 
-    # Simulated processing
+    # Deterministic simulation output
     result = {
         "status": "success",
         "event_id": request.event_id,
@@ -32,7 +32,4 @@ def simulate(request: SimulationRequest):
     }
 
     processed_events[request.event_id] = result
-
     return result
-
-Add core simulation API (FastAPI service)

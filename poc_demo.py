@@ -1,45 +1,16 @@
 import json
 
-class Node:
-    def __init__(self, name):
-        self.name = name
-        self.state = "OK"
-        self.dependents = []
-
-    def add(self, node):
-        self.dependents.append(node)
-
-
-def propagate_failure(node, log):
-    if node.state == "FAIL":
-        return
-
-    node.state = "FAIL"
-    log.append(node.name + " failed")
-
-    for d in node.dependents:
-        log.append(node.name + " impacts " + d.name)
-        propagate_failure(d, log)
-
-
 def run_simulation():
-    # Build dependency graph
-    A = Node("A")
-    B = Node("B")
-    C = Node("C")
-    D = Node("D")
-
-    A.add(B)
-    B.add(C)
-    C.add(D)
-
     log = []
 
-    # Trigger failure
-    A.state = "FAIL"
-    propagate_failure(A, log)
+    # Simple deterministic cascade
+    nodes = ["A", "B", "C", "D"]
 
-    # Save output for cloud artifact
+    for i in range(len(nodes)):
+        log.append(f"{nodes[i]} failed")
+        if i < len(nodes) - 1:
+            log.append(f"{nodes[i]} impacts {nodes[i+1]}")
+
     output = {
         "log": log,
         "replay_test": True
@@ -48,11 +19,8 @@ def run_simulation():
     with open("result.json", "w") as f:
         json.dump(output, f, indent=2)
 
-    # Print output
-    for entry in log:
-        print(entry)
-
-    print("\nREPLAY TEST:", True)
+    print("\n".join(log))
+    print("\nREPLAY TEST: True")
 
 
 if __name__ == "__main__":

@@ -24,3 +24,5 @@ jobs:
         with:
           name: simulation-result
           path: result.json
+          
+Add GitHub Actions POC execution pipeline

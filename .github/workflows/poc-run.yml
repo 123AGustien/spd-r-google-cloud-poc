@@ -1,5 +1,5 @@
-POC: POC Simulation Run
-run: python poc_demo.py
+name: POC Simulation Run
+
 on:
   workflow_dispatch:
 
@@ -24,5 +24,3 @@ jobs:
         with:
           name: simulation-result
           path: result.json
-          
-Add GitHub Actions POC execution pipeline

@@ -1,4 +1,4 @@
-Run: POC Simulation Run
+POC: POC Simulation Run
 run: python poc_demo.py
 on:
   workflow_dispatch:

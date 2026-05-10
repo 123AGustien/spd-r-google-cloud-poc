@@ -1,3 +1,30 @@
+
+## 🧊 System Freeze (v1.0)
+
+SPD-R operates under a **frozen deterministic baseline (v1.0)**.
+
+This guarantees:
+
+- Deterministic supervisory behaviour is locked
+- Observability and cascade traces are reproducible
+- Core architecture is stable and versioned
+- Identical inputs always produce identical outputs
+
+### 🔒 Frozen Components
+
+- Event supervision model
+- Dependency-aware observability layer
+- Cascade trace engine
+- Sandbox execution runtime
+
+### 🌿 Evolution Rule
+
+- `v1.0` → frozen baseline (immutable)
+- `develop` → controlled experimental changes
+- `v1.1+` → future validated stable releases
+
+This system is a **reference supervisory model**, not an evolving production system.
+
 # SPD-R Google Cloud Proof of Concept
 
 ---

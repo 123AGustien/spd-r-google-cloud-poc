@@ -1,0 +1,68 @@
+import json
+import hashlib
+from datetime import datetime
+
+# -----------------------------
+# REPLAY ENGINE CORE
+# -----------------------------
+
+def generate_run_hash(result: dict) -> str:
+    """
+    Creates deterministic hash of system output.
+    Ensures replay integrity.
+    """
+    normalized = json.dumps(result, sort_keys=True).encode()
+    return hashlib.sha256(normalized).hexdigest()
+
+
+def attach_metadata(result: dict) -> dict:
+    """
+    Adds deterministic replay metadata.
+    """
+    result["_meta"] = {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "schema": "SPD-R-REPLAY-v1",
+    }
+    result["_meta"]["run_hash"] = generate_run_hash(result)
+    return result
+
+
+def save_replay(result: dict, filename="replay_log.json"):
+    """
+    Saves full deterministic replay snapshot.
+    """
+    with open(filename, "w") as f:
+        json.dump(result, f, indent=2)
+
+
+def verify_replay(file_path: str) -> bool:
+    """
+    Verifies that a saved replay is internally consistent.
+    """
+    with open(file_path, "r") as f:
+        data = json.load(f)
+
+    stored_hash = data["_meta"]["run_hash"]
+
+    # recompute hash without metadata
+    stripped = dict(data)
+    stripped.pop("_meta", None)
+
+    recomputed = hashlib.sha256(
+        json.dumps(stripped, sort_keys=True).encode()
+    ).hexdigest()
+
+    return stored_hash == recomputed
+
+
+# -----------------------------
+# INTEGRATION WRAPPER
+# -----------------------------
+
+def wrap_system_output(result: dict) -> dict:
+    """
+    Call this AFTER system_cli_runner produces output.
+    """
+    result = attach_metadata(result)
+    save_replay(result)
+    return result

@@ -13,17 +13,49 @@ It formalises deterministic system visibility, trace completeness, and dependenc
 
 The Observability Layer produces a deterministic scalar metric:
 
-DHTI = (T_complete × S_resolution × R_consistency) / (N_events + ε)
+\[
+DHTI = \frac{T_{complete} \times S_{resolution} \times R_{consistency}}{N_{events} + \varepsilon}
+\]
 
 ---
 
 ## 📡 Variable Definitions
 
-- T_complete = proportion of system events fully traced end-to-end  
-- S_resolution = granularity of dependency state visibility  
-- R_consistency = repeatability score across identical simulations  
-- N_events = total number of system events processed  
-- ε = numerical stability constant  
+- **T_complete** = proportion of system events fully traced end-to-end  
+- **S_resolution** = granularity of dependency state visibility  
+- **R_consistency** = repeatability score across identical simulations  
+- **N_events** = total number of system events processed (raw count before normalization)  
+- **ε** = numerical stability constant  
+
+---
+
+## 📏 Normalisation Rules
+
+All input variables are normalised to the range **[0,1]** prior to computation:
+
+- T_complete ∈ [0,1]  
+- S_resolution ∈ [0,1]  
+- R_consistency ∈ [0,1]  
+
+Event scaling is applied as:
+
+\[
+N_{events} = \log(1 + \text{raw\_event\_count})
+\]
+
+This ensures logarithmic scaling and prevents system distortion under high event load.
+
+---
+
+## ⚙️ Stability Constant
+
+\[
+\varepsilon = 1 \times 10^{-6}
+\]
+
+Purpose:
+- Prevent division instability
+- Maintain deterministic output under edge-case conditions
 
 ---
 
@@ -32,25 +64,37 @@ DHTI = (T_complete × S_resolution × R_consistency) / (N_events + ε)
 The Observability layer produces:
 
 - DHTI (primary visibility score)
-- event trace completeness map
-- dependency state graph snapshot
-- anomaly detection distribution
-- temporal event reconstruction accuracy curve
+- Event trace completeness map
+- Dependency state graph snapshot
+- Anomaly detection distribution
+- Temporal event reconstruction accuracy curve
 
 ---
 
-## 📉 Interpretation
+## 📉 Interpretation Scale
 
-- 0.80 – 1.00 → fully observable system (high trace clarity)
-- 0.50 – 0.79 → partial observability gaps
-- 0.20 – 0.49 → fragmented dependency visibility
-- 0.00 – 0.19 → low system traceability / opaque system state
+- **0.80 – 1.00** → fully observable system (high trace clarity)  
+- **0.50 – 0.79** → partial observability gaps  
+- **0.20 – 0.49** → fragmented dependency visibility  
+- **0.00 – 0.19** → low system traceability / opaque system state  
+
+---
+
+## 🧠 System Role
+
+DHTI is a synthetic observability metric used only for:
+
+- simulation-based system analysis  
+- dependency graph evaluation  
+- resilience research in sandbox environments  
+
+It does **not** represent real-world monitoring or production telemetry.
 
 ---
 
 ## 🔁 Behaviour Model
 
-The observability engine ensures:
+The observability engine operates through the following deterministic pipeline:
 
 1. Event ingestion into trace system  
 2. Dependency mapping reconstruction  
@@ -58,38 +102,48 @@ The observability engine ensures:
 4. Cross-run consistency validation  
 5. Trace completeness scoring  
 
-All outputs remain deterministic and reproducible under identical inputs.
+All outputs are fully reproducible under identical inputs.
 
 ---
 
-## 🧠 Intended Use
+## 🔗 Cross-Layer Dependency Mapping
 
-This artifact is intended for:
+DHTI integrates into the system-wide resilience model:
 
-- system observability evaluation  
-- infrastructure telemetry modelling  
-- dependency graph reconstruction research  
-- cloud system trace validation (sandbox environments)  
-- resilience engineering analysis  
+- Orbital Layer input → connectivity degradation signals (OCRS)
+- Cascade Layer input → failure propagation visibility feedback (FPC)
+- Observability Layer output → DHTI (system visibility score)
+
+### Final System Equation:
+
+\[
+SRS = f(OCRS, FPC, DHTI)
+\]
+
+Where:
+- OCRS = Orbital Connectivity Resilience Score  
+- FPC = Failure Propagation Coefficient  
+- DHTI = Dependency Health Trace Index  
 
 ---
 
 ## ⚠️ Constraints
 
-- simulation-only observability model
-- no live production monitoring authority
-- no external system integration control
-- sandbox execution only
+- Simulation-only observability model  
+- No production monitoring authority  
+- No external system control  
+- Sandbox execution environment only  
 
 ---
 
 ## 📌 Design Principles
 
-- deterministic trace reconstruction  
-- full dependency transparency  
-- cross-run reproducibility  
-- cascade-aware observability alignment (Cascade + Orbital)
+- Deterministic trace reconstruction  
+- Full dependency transparency  
+- Cross-run reproducibility  
+- Cascade-aware observability alignment  
+- Cross-layer metric integration  
 
 ---
 
-End of Observability Simulation Artifact Definition
+End of Observability Simulation Artifact

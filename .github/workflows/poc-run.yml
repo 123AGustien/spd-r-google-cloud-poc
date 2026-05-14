@@ -11,36 +11,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ---------------------------------
-      # 1. Checkout repository
-      # ---------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ---------------------------------
-      # 2. Setup Python environment
-      # ---------------------------------
-      - name: Set up Python
+      - name: Set up Python environment
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # ---------------------------------
-      # 3. Run deterministic system engine
-      # ---------------------------------
-      - name: Run SPD-R System CLI Runner
-        run: python system_cli_runner.py
+      - name: Debug repo structure
+        run: ls -R
 
-      # ---------------------------------
-      # 4. Resilience validation gate
-      # ---------------------------------
+      - name: Run SPD-R System CLI Runner
+        run: |
+          if [ -f system_cli_runner.py ]; then
+            python system_cli_runner.py
+          else
+            echo "❌ system_cli_runner.py NOT FOUND"
+            exit 1
+          fi
+
       - name: Resilience Threshold Gate
         run: |
           python - << 'EOF'
-          import json
-          import sys
+          import json, sys
 
-          # Load system output
           try:
               with open("system_result.json", "r") as f:
                   data = json.load(f)
@@ -48,31 +43,24 @@ jobs:
               print("❌ system_result.json not found")
               sys.exit(1)
 
-          # Extract SRS
-          srs = data.get("fusion", {}).get("SRS", None)
+          srs = data.get("fusion", {}).get("SRS")
 
           print("\n=== SPD-R RESILIENCE GATE ===")
           print(f"SRS Value: {srs}")
 
           if srs is None:
-              print("❌ Invalid system output (missing SRS)")
+              print("❌ Missing SRS")
               sys.exit(1)
 
-          # Deterministic threshold rule
           THRESHOLD = 0.2
 
           if srs < THRESHOLD:
-              print("❌ SYSTEM FAILURE: Resilience below threshold")
-              print(f"Threshold: {THRESHOLD}")
+              print("❌ SYSTEM FAILURE")
               sys.exit(1)
-          else:
-              print("✅ SYSTEM STABLE: Resilience within bounds")
-              sys.exit(0)
+
+          print("✅ SYSTEM STABLE")
           EOF
 
-      # ---------------------------------
-      # 5. Upload artifacts
-      # ---------------------------------
       - name: Upload Simulation Results
         uses: actions/upload-artifact@v4
         with:

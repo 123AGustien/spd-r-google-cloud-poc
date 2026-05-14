@@ -1,7 +1,10 @@
-name: POC Simulation Run
+name: Batch Simulation + Resilience CI
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   run-simulation:
@@ -16,11 +19,19 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Run POC simulation
-        run: python poc_demo.py
+      - name: Run batch simulation engine
+        run: python batch_simulation_engine.py
 
-      - name: Upload result artifact
+      - name: Compute resilience statistics
+        run: python SYSTEM_RESILIENCE_STATISTICS_ENGINE.py
+
+      - name: Run CLI system integrity check
+        run: python system_cli_runner.py
+
+      - name: Upload batch results
         uses: actions/upload-artifact@v4
         with:
-          name: simulation-result
-          path: result.json
+          name: batch-simulation-results
+          path: |
+            batch_results.json
+            system_result.json

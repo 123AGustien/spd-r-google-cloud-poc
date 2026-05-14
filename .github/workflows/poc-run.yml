@@ -1,3 +1,4 @@
+            
 name: Batch Simulation + Resilience CI
 
 on:
@@ -7,31 +8,82 @@ on:
       - main
 
 jobs:
-  run-simulation:
+  resilience-validation:
     runs-on: ubuntu-latest
 
     steps:
+      # -----------------------------
+      # 1. Checkout code
+      # -----------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # -----------------------------
+      # 2. Setup Python runtime
+      # -----------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Run batch simulation engine
+      # -----------------------------
+      # 3. Run Batch Simulation Engine
+      # -----------------------------
+      - name: Run Batch Simulation
         run: python batch_simulation_engine.py
 
-      - name: Compute resilience statistics
+      # -----------------------------
+      # 4. Compute Resilience Statistics
+      # -----------------------------
+      - name: Compute Statistics Engine
         run: python SYSTEM_RESILIENCE_STATISTICS_ENGINE.py
 
-      - name: Run CLI system integrity check
+      # -----------------------------
+      # 5. Run Core System Validation
+      # -----------------------------
+      - name: Run CLI System Runner
         run: python system_cli_runner.py
 
-      - name: Upload batch results
+      # -----------------------------
+      # 6. Resilience Gate (CRITICAL)
+      # -----------------------------
+      - name: Resilience Threshold Gate
+        run: |
+          python - << 'EOF'
+          import json
+          import sys
+
+          # Load batch results
+          with open("batch_results.json", "r") as f:
+              data = json.load(f)
+
+          stats = data.get("statistics", {})
+          mean_srs = stats.get("mean_srs", 0)
+
+          print("\n=== RESILIENCE GATE CHECK ===")
+          print(f"Mean SRS: {mean_srs}")
+
+          # -----------------------------
+          # Deterministic failure rule
+          # -----------------------------
+          THRESHOLD = 0.2
+
+          if mean_srs < THRESHOLD:
+              print("❌ SYSTEM FAILURE: Resilience below threshold")
+              print(f"Threshold: {THRESHOLD}")
+              sys.exit(1)
+          else:
+              print("✅ SYSTEM STABLE: Resilience within bounds")
+              sys.exit(0)
+          EOF
+
+      # -----------------------------
+      # 7. Upload Artifacts
+      # -----------------------------
+      - name: Upload Simulation Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: batch-simulation-results
+          name: sextant-batch-resilience-results
           path: |
             batch_results.json
             system_result.json

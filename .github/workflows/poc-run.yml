@@ -1,4 +1,4 @@
-name: Batch Simulation + Resilience CI
+name: Batch Simulation + Resilience CI (Self-Healing)
 
 on:
   workflow_dispatch:
@@ -11,26 +11,59 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------------------------------
+      # 1. Checkout repository
+      # ---------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ---------------------------------
+      # 2. Setup Python
+      # ---------------------------------
       - name: Set up Python environment
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Debug repo structure
+      # ---------------------------------
+      # 3. Debug repository structure
+      # ---------------------------------
+      - name: Show repository structure
         run: ls -R
 
-      - name: Run SPD-R System CLI Runner
+      # ---------------------------------
+      # 4. Self-healing CLI runner (NO PATH FAILURES)
+      # ---------------------------------
+      - name: Run SPD-R System (Auto-Detect)
         run: |
-          if [ -f system_cli_runner.py ]; then
-            python system_cli_runner.py
-          else
+          echo "🔍 Searching for system_cli_runner.py..."
+
+          FILE=$(find . -name "system_cli_runner.py" | head -n 1)
+
+          if [ -z "$FILE" ]; then
             echo "❌ system_cli_runner.py NOT FOUND"
+            echo "📂 Full repo structure:"
+            ls -R
             exit 1
           fi
 
+          echo "✅ Found CLI Runner at: $FILE"
+          python "$FILE"
+
+      # ---------------------------------
+      # 5. Validate output file
+      # ---------------------------------
+      - name: Validate system output
+        run: |
+          if [ ! -f system_result.json ]; then
+            echo "❌ system_result.json missing"
+            exit 1
+          fi
+          echo "✅ Output file exists"
+
+      # ---------------------------------
+      # 6. Resilience Gate (SRS check)
+      # ---------------------------------
       - name: Resilience Threshold Gate
         run: |
           python - << 'EOF'
@@ -39,8 +72,8 @@ jobs:
           try:
               with open("system_result.json", "r") as f:
                   data = json.load(f)
-          except FileNotFoundError:
-              print("❌ system_result.json not found")
+          except Exception as e:
+              print("❌ Failed to load system_result.json:", e)
               sys.exit(1)
 
           srs = data.get("fusion", {}).get("SRS")
@@ -49,18 +82,21 @@ jobs:
           print(f"SRS Value: {srs}")
 
           if srs is None:
-              print("❌ Missing SRS")
+              print("❌ Missing SRS value")
               sys.exit(1)
 
           THRESHOLD = 0.2
 
           if srs < THRESHOLD:
-              print("❌ SYSTEM FAILURE")
+              print("❌ SYSTEM FAILURE: Below resilience threshold")
               sys.exit(1)
 
-          print("✅ SYSTEM STABLE")
+          print("✅ SYSTEM STABLE: Resilience OK")
           EOF
 
+      # ---------------------------------
+      # 7. Upload artifacts
+      # ---------------------------------
       - name: Upload Simulation Results
         uses: actions/upload-artifact@v4
         with:

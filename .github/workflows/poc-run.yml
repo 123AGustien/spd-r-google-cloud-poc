@@ -11,58 +11,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -----------------------------
-      # 1. Checkout
-      # -----------------------------
+      # ---------------------------------
+      # 1. Checkout repository
+      # ---------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -----------------------------
-      # 2. Setup Python
-      # -----------------------------
+      # ---------------------------------
+      # 2. Setup Python environment
+      # ---------------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # -----------------------------
-      # 3. Run Unified System Runner
-      # -----------------------------
-      - name: Run System CLI Runner (Single Source of Truth)
+      # ---------------------------------
+      # 3. Run deterministic system engine
+      # ---------------------------------
+      - name: Run SPD-R System CLI Runner
         run: python system_cli_runner.py
 
-      # -----------------------------
-      # 4. Resilience Gate
-      # -----------------------------
+      # ---------------------------------
+      # 4. Resilience validation gate
+      # ---------------------------------
       - name: Resilience Threshold Gate
         run: |
           python - << 'EOF'
           import json
           import sys
 
-          with open("system_result.json", "r") as f:
-              data = json.load(f)
+          # Load system output
+          try:
+              with open("system_result.json", "r") as f:
+                  data = json.load(f)
+          except FileNotFoundError:
+              print("❌ system_result.json not found")
+              sys.exit(1)
 
-          mean_srs = data["fusion"]["SRS"]
+          # Extract SRS
+          srs = data.get("fusion", {}).get("SRS", None)
 
-          print("\n=== RESILIENCE GATE ===")
-          print("Mean SRS:", mean_srs)
+          print("\n=== SPD-R RESILIENCE GATE ===")
+          print(f"SRS Value: {srs}")
 
+          if srs is None:
+              print("❌ Invalid system output (missing SRS)")
+              sys.exit(1)
+
+          # Deterministic threshold rule
           THRESHOLD = 0.2
 
-          if mean_srs < THRESHOLD:
+          if srs < THRESHOLD:
               print("❌ SYSTEM FAILURE: Resilience below threshold")
+              print(f"Threshold: {THRESHOLD}")
               sys.exit(1)
           else:
-              print("✅ SYSTEM STABLE")
+              print("✅ SYSTEM STABLE: Resilience within bounds")
               sys.exit(0)
           EOF
 
-      # -----------------------------
-      # 5. Upload Artifacts
-      # -----------------------------
-      - name: Upload Results
+      # ---------------------------------
+      # 5. Upload artifacts
+      # ---------------------------------
+      - name: Upload Simulation Results
         uses: actions/upload-artifact@v4
         with:
-          name: system-resilience-results
+          name: spd-r-resilience-results
           path: system_result.json

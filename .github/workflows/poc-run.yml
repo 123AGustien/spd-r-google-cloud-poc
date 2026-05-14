@@ -1,4 +1,4 @@
-name: Batch Simulation + Resilience CI (Auto Snapshot)
+name: SPD-R Reproducible CI (Industry Grade)
 
 on:
   workflow_dispatch:
@@ -7,106 +7,95 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  resilience-validation:
-    runs-on: ubuntu-latest
+  validate:
+    runs-on: ubuntu-22.04   # 🔒 NO DRIFT
 
     steps:
 
       # ---------------------------------
-      # 1. Context Banner
+      # 1. Identity / traceability
       # ---------------------------------
-      - name: CI Context Banner
+      - name: CI Identity
         run: |
-          echo "=============================="
-          echo "SPD-R CI SNAPSHOT PIPELINE"
-          echo "=============================="
+          echo "SPD-R REPRODUCIBLE CI"
+          echo "Commit: $GITHUB_SHA"
 
       # ---------------------------------
-      # 2. Checkout
+      # 2. Checkout EXACT commit
       # ---------------------------------
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       # ---------------------------------
-      # 3. Setup Python
+      # 3. Setup Python (fixed version)
       # ---------------------------------
-      - name: Set up Python environment
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       # ---------------------------------
-      # 4. Run System
+      # 4. Install dependencies (if any)
       # ---------------------------------
-      - name: Run SPD-R System (Safe Execution)
+      - name: Install dependencies
         run: |
-          set -e
-
-          FILE=$(find . -name "system_cli_runner.py" | head -n 1)
-
-          if [ -z "$FILE" ]; then
-            echo "❌ CLI runner not found"
-            exit 1
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "No dependencies"
           fi
 
+      # ---------------------------------
+      # 5. Execute deterministic system
+      # ---------------------------------
+      - name: Run system
+        run: |
+          set -e
+          FILE=$(find . -name "system_cli_runner.py" | head -n 1)
           python "$FILE"
 
       # ---------------------------------
-      # 5. Validate Output
+      # 6. Validate output existence
       # ---------------------------------
       - name: Validate output
         run: |
           test -f system_result.json
 
       # ---------------------------------
-      # 6. Resilience Gate
+      # 7. Deterministic validation gate
       # ---------------------------------
-      - name: SRS Gate
+      - name: Resilience Gate
         run: |
           python - << 'EOF'
           import json, sys
 
-          data = json.load(open("system_result.json"))
+          with open("system_result.json") as f:
+              data = json.load(f)
+
           srs = data.get("fusion", {}).get("SRS")
 
-          if srs is None or srs < 0:
-              print("FAIL")
+          print("SRS:", srs)
+
+          if srs is None:
+              sys.exit(1)
+
+          if srs < 0:
               sys.exit(1)
 
           print("PASS")
           EOF
 
       # ---------------------------------
-      # 7. Upload Artifact
+      # 8. Artifact (immutable trace)
       # ---------------------------------
-      - name: Upload results
-        if: always()
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: spd-r-ci-results
+          name: spd-r-run-${{ github.sha }}
           path: system_result.json
-
-      # ---------------------------------
-      # 8. AUTO CI TAGGING
-      # ---------------------------------
-      - name: Auto Tag CI Snapshot
-        if: success()
-        run: |
-          set -e
-
-          TAG="ci-v1.1.0-$(date +%Y%m%d-%H%M%S)"
-
-          git config user.name "spd-r-bot"
-          git config user.email "spd-r-bot@users.noreply.github.com"
-
-          git tag -a "$TAG" -m "CI snapshot"
-
-          git push origin "$TAG"
-
-          echo "Tagged: $TAG"

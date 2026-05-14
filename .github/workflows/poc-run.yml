@@ -6,11 +6,18 @@ on:
     branches:
       - main
 
+# ---------------------------------
+# Global environment (IMPORTANT FIX)
+# ---------------------------------
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   resilience-validation:
     runs-on: ubuntu-latest
 
     steps:
+
       # ---------------------------------
       # 1. Checkout repository
       # ---------------------------------
@@ -29,12 +36,14 @@ jobs:
       # 3. Debug repository structure
       # ---------------------------------
       - name: Show repository structure
-        run: ls -R
+        run: |
+          echo "📂 Repository structure:"
+          ls -R
 
       # ---------------------------------
-      # 4. Self-healing CLI runner (NO PATH FAILURES)
+      # 4. Self-healing CLI runner (auto-discovery)
       # ---------------------------------
-      - name: Run SPD-R System (Auto-Detect)
+      - name: Run SPD-R System (Auto-Detect CLI)
         run: |
           echo "🔍 Searching for system_cli_runner.py..."
 
@@ -51,20 +60,21 @@ jobs:
           python "$FILE"
 
       # ---------------------------------
-      # 5. Validate output file
+      # 5. Validate output existence
       # ---------------------------------
-      - name: Validate system output
+      - name: Validate system output file
         run: |
           if [ ! -f system_result.json ]; then
             echo "❌ system_result.json missing"
             exit 1
           fi
+
           echo "✅ Output file exists"
 
       # ---------------------------------
-      # 6. Resilience Gate (SRS check)
+      # 6. Resilience Gate (SRS validation)
       # ---------------------------------
-      - name: Resilience Threshold Gate
+      - name: Resilience Threshold Gate (SRS Check)
         run: |
           python - << 'EOF'
           import json, sys
@@ -95,9 +105,22 @@ jobs:
           EOF
 
       # ---------------------------------
-      # 7. Upload artifacts
+      # 7. (Optional) Failure classification hook
+      # ---------------------------------
+      - name: Classify System State
+        if: always()
+        run: |
+          if [ -f system_result.json ]; then
+            echo "STATE=OK" >> $GITHUB_ENV
+          else
+            echo "STATE=FAIL_NO_OUTPUT" >> $GITHUB_ENV
+          fi
+
+      # ---------------------------------
+      # 8. Upload artifacts (FIXED YAML)
       # ---------------------------------
       - name: Upload Simulation Results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: spd-r-resilience-results

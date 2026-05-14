@@ -1,4 +1,4 @@
-name: Batch Simulation + Resilience CI (Self-Healing)
+name: Batch Simulation + Resilience CI (Self-Healing + Auto-Tag)
 
 on:
   workflow_dispatch:
@@ -7,7 +7,13 @@ on:
       - main
 
 # ---------------------------------
-# Global environment (IMPORTANT FIX)
+# REQUIRED: allow tagging
+# ---------------------------------
+permissions:
+  contents: write
+
+# ---------------------------------
+# Global environment
 # ---------------------------------
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -19,13 +25,22 @@ jobs:
     steps:
 
       # ---------------------------------
-      # 1. Checkout repository
+      # 1. CI Context Banner
+      # ---------------------------------
+      - name: CI Context Banner
+        run: |
+          echo "=============================="
+          echo "SPD-R Resilience CI Running"
+          echo "=============================="
+
+      # ---------------------------------
+      # 2. Checkout repository
       # ---------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # ---------------------------------
-      # 2. Setup Python
+      # 3. Setup Python
       # ---------------------------------
       - name: Set up Python environment
         uses: actions/setup-python@v5
@@ -33,7 +48,7 @@ jobs:
           python-version: "3.10"
 
       # ---------------------------------
-      # 3. Debug repository structure
+      # 4. Repository structure
       # ---------------------------------
       - name: Show repository structure
         run: |
@@ -41,26 +56,27 @@ jobs:
           ls -R
 
       # ---------------------------------
-      # 4. Self-healing CLI runner (auto-discovery)
+      # 5. Safe CLI execution
       # ---------------------------------
-      - name: Run SPD-R System (Auto-Detect CLI)
+      - name: Run SPD-R System (Safe Execution)
         run: |
+          set -e
+
           echo "🔍 Searching for system_cli_runner.py..."
 
           FILE=$(find . -name "system_cli_runner.py" | head -n 1)
 
           if [ -z "$FILE" ]; then
-            echo "❌ system_cli_runner.py NOT FOUND"
-            echo "📂 Full repo structure:"
+            echo "❌ ERROR: CLI runner not found"
             ls -R
             exit 1
           fi
 
-          echo "✅ Found CLI Runner at: $FILE"
+          echo "✅ Found CLI Runner: $FILE"
           python "$FILE"
 
       # ---------------------------------
-      # 5. Validate output existence
+      # 6. Output validation
       # ---------------------------------
       - name: Validate system output file
         run: |
@@ -72,7 +88,7 @@ jobs:
           echo "✅ Output file exists"
 
       # ---------------------------------
-      # 6. Resilience Gate (SRS validation)
+      # 7. Resilience Gate (SRS check)
       # ---------------------------------
       - name: Resilience Threshold Gate (SRS Check)
         run: |
@@ -105,19 +121,15 @@ jobs:
           EOF
 
       # ---------------------------------
-      # 7. (Optional) Failure classification hook
+      # 8. Runtime snapshot
       # ---------------------------------
-      - name: Classify System State
-        if: always()
+      - name: Runtime Snapshot
         run: |
-          if [ -f system_result.json ]; then
-            echo "STATE=OK" >> $GITHUB_ENV
-          else
-            echo "STATE=FAIL_NO_OUTPUT" >> $GITHUB_ENV
-          fi
+          python --version
+          uname -a
 
       # ---------------------------------
-      # 8. Upload artifacts (FIXED YAML)
+      # 9. Upload artifacts (always safe)
       # ---------------------------------
       - name: Upload Simulation Results
         if: always()
@@ -125,3 +137,26 @@ jobs:
         with:
           name: spd-r-resilience-results
           path: system_result.json
+
+      # ---------------------------------
+      # 10. Auto Tag (ONLY on success)
+      # ---------------------------------
+      - name: Auto Tag Release (Self-Versioning)
+        if: success()
+        run: |
+          set -e
+
+          echo "🔖 Auto-tagging successful CI run..."
+
+          TAG="v1.1.0-auto-$(date +%Y%m%d-%H%M%S)"
+
+          echo "Generated tag: $TAG"
+
+          git config user.name "spd-r-bot"
+          git config user.email "spd-r-bot@users.noreply.github.com"
+
+          git tag -a "$TAG" -m "Auto-tag: successful SPD-R resilience CI run"
+
+          git push origin "$TAG"
+
+          echo "✅ Tag pushed successfully: $TAG"

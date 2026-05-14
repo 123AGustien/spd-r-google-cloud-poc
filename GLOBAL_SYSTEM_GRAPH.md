@@ -4,7 +4,7 @@
 
 Defines the unified deterministic dependency graph across all Sextant Protocol repositories and their cross-layer interactions.
 
-All system components are treated as nodes in a single reproducible simulation graph enabling cross-domain resilience modelling.
+All system components are modeled as nodes in a single reproducible simulation graph enabling cross-domain resilience analysis.
 
 ---
 
@@ -30,31 +30,31 @@ Where:
 - OCRS = Orbital Connectivity Resilience Score  
 - DHTI = Dependency Health Trace Index  
 - CPI = Cascade Propagation Index  
-- SRS = System Resilience Score (final fused output)
+- SRS = System Resilience Score (final fused system output)
 
 ---
 
 ## 4. Dependency Graph Model
 
-Each repository is represented as a deterministic node in a directed acyclic graph (DAG).
+Each repository is modeled as a deterministic node within a directed acyclic graph (DAG).
 
 ### 4.1 Node Properties
-- State value normalized in range: [0, 1]
+- State ∈ [0, 1]
 - Deterministic output per simulation run
-- Stateless between runs unless explicitly re-initialized
+- Stateless between runs unless explicitly reinitialized
 - Fully sandbox constrained
 
 ### 4.2 Edge Properties
 - Weighted dependency influence
-- Directional propagation of state changes
+- Directed propagation of state changes
 - Cascade-enabled transitions
-- No circular dependency activation in baseline mode
+- No circular dependency activation in baseline configuration
 
 ---
 
 ## 5. Global State Equation
 
-The system-wide resilience function is defined as:
+System resilience is defined as:
 
 SRS = f(OCRS, DHTI, CPI)
 
@@ -66,10 +66,10 @@ SRS = OCRS × DHTI × (1 − CPI)
 
 ## 6. Layer Interaction Rules
 
-1. Orbital Layer generates infrastructure stability signal → OCRS  
+1. Orbital Layer computes infrastructure stability → OCRS  
 2. Observability Layer computes trace completeness → DHTI  
 3. Cascade Layer computes failure propagation pressure → CPI  
-4. Fusion Layer computes final system resilience state → SRS  
+4. Fusion Layer computes final system resilience → SRS  
 
 ---
 
@@ -79,7 +79,7 @@ SRS = OCRS × DHTI × (1 − CPI)
 - No production or live system coupling  
 - Deterministic replay required for all executions  
 - Identical inputs must produce identical outputs  
-- No external runtime mutation of system graph  
+- No external mutation of system graph state  
 
 ---
 
@@ -89,7 +89,7 @@ SRS = OCRS × DHTI × (1 − CPI)
 - Cross-layer observability alignment  
 - Explicit dependency transparency  
 - Reproducible simulation outcomes  
-- Modular separation of all system layers  
+- Strict modular separation of system layers  
 
 ---
 
@@ -97,11 +97,13 @@ SRS = OCRS × DHTI × (1 − CPI)
 
 This graph represents a **multi-repository deterministic resilience simulation topology**, not an operational infrastructure system.
 
-It is designed for:
-- dependency research
-- cascade modelling
-- observability evaluation
-- orbital-to-ground resilience simulation
+It is designed strictly for:
+
+- Dependency research  
+- Cascade propagation modeling  
+- Observability evaluation  
+- Orbital-to-ground resilience simulation  
+- Cross-layer system behavior analysis  
 
 ---
 

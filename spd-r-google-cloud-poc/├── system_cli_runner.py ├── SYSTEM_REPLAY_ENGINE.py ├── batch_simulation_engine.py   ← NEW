@@ -1,0 +1,82 @@
+import subprocess
+import json
+import statistics
+from SYSTEM_REPLAY_ENGINE import wrap_system_output
+
+# -----------------------------
+# RUN SINGLE SIMULATION
+# -----------------------------
+def run_single_sim():
+    """
+    Executes your CLI runner as subprocess
+    and captures SRS output from system_result.json
+    """
+    subprocess.run(["python", "system_cli_runner.py"], check=True)
+
+    with open("system_result.json", "r") as f:
+        data = json.load(f)
+
+    return data["fusion"]["SRS"]
+
+
+# -----------------------------
+# BATCH ENGINE
+# -----------------------------
+def run_batch(n_runs=20):
+    results = []
+
+    print(f"\n=== RUNNING BATCH SIMULATION: {n_runs} RUNS ===\n")
+
+    for i in range(n_runs):
+        srs = run_single_sim()
+        results.append(srs)
+        print(f"Run {i+1}: SRS = {srs}")
+
+    return results
+
+
+# -----------------------------
+# STATISTICS ENGINE
+# -----------------------------
+def compute_stats(results):
+    if not results:
+        return {}
+
+    stats = {
+        "mean_srs": round(statistics.mean(results), 4),
+        "min_srs": min(results),
+        "max_srs": max(results),
+        "variance": round(statistics.variance(results) if len(results) > 1 else 0, 6),
+        "collapse_rate": round(len([r for r in results if r < 0.2]) / len(results), 4),
+        "total_runs": len(results)
+    }
+
+    return stats
+
+
+# -----------------------------
+# MAIN EXECUTION
+# -----------------------------
+def run():
+    results = run_batch(n_runs=20)
+    stats = compute_stats(results)
+
+    final_output = {
+        "batch_results": results,
+        "statistics": stats,
+        "system": "SPD-R Batch Resilience Engine",
+        "status": "deterministic_multi_run_complete"
+    }
+
+    # wrap with replay metadata (optional but recommended)
+    final_output = wrap_system_output(final_output)
+
+    with open("batch_results.json", "w") as f:
+        json.dump(final_output, f, indent=2)
+
+    print("\n=== BATCH STATISTICS ===")
+    print(json.dumps(stats, indent=2))
+
+
+if __name__ == "__main__":
+    run()

@@ -1,4 +1,4 @@
-name: Batch Simulation + Resilience CI (Self-Healing + Auto-Tag)
+name: Batch Simulation + Resilience CI (Auto Snapshot)
 
 on:
   workflow_dispatch:
@@ -6,15 +6,9 @@ on:
     branches:
       - main
 
-# ---------------------------------
-# REQUIRED: allow tagging
-# ---------------------------------
 permissions:
   contents: write
 
-# ---------------------------------
-# Global environment
-# ---------------------------------
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -25,16 +19,16 @@ jobs:
     steps:
 
       # ---------------------------------
-      # 1. CI Context Banner
+      # 1. Context Banner
       # ---------------------------------
       - name: CI Context Banner
         run: |
           echo "=============================="
-          echo "SPD-R Resilience CI Running"
+          echo "SPD-R CI SNAPSHOT PIPELINE"
           echo "=============================="
 
       # ---------------------------------
-      # 2. Checkout repository
+      # 2. Checkout
       # ---------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,115 +42,71 @@ jobs:
           python-version: "3.10"
 
       # ---------------------------------
-      # 4. Repository structure
-      # ---------------------------------
-      - name: Show repository structure
-        run: |
-          echo "📂 Repository structure:"
-          ls -R
-
-      # ---------------------------------
-      # 5. Safe CLI execution
+      # 4. Run System
       # ---------------------------------
       - name: Run SPD-R System (Safe Execution)
         run: |
           set -e
 
-          echo "🔍 Searching for system_cli_runner.py..."
-
           FILE=$(find . -name "system_cli_runner.py" | head -n 1)
 
           if [ -z "$FILE" ]; then
-            echo "❌ ERROR: CLI runner not found"
-            ls -R
+            echo "❌ CLI runner not found"
             exit 1
           fi
 
-          echo "✅ Found CLI Runner: $FILE"
           python "$FILE"
 
       # ---------------------------------
-      # 6. Output validation
+      # 5. Validate Output
       # ---------------------------------
-      - name: Validate system output file
+      - name: Validate output
         run: |
-          if [ ! -f system_result.json ]; then
-            echo "❌ system_result.json missing"
-            exit 1
-          fi
-
-          echo "✅ Output file exists"
+          test -f system_result.json
 
       # ---------------------------------
-      # 7. Resilience Gate (SRS check)
+      # 6. Resilience Gate
       # ---------------------------------
-      - name: Resilience Threshold Gate (SRS Check)
+      - name: SRS Gate
         run: |
           python - << 'EOF'
           import json, sys
 
-          try:
-              with open("system_result.json", "r") as f:
-                  data = json.load(f)
-          except Exception as e:
-              print("❌ Failed to load system_result.json:", e)
-              sys.exit(1)
-
+          data = json.load(open("system_result.json"))
           srs = data.get("fusion", {}).get("SRS")
 
-          print("\n=== SPD-R RESILIENCE GATE ===")
-          print(f"SRS Value: {srs}")
-
-          if srs is None:
-              print("❌ Missing SRS value")
+          if srs is None or srs < 0:
+              print("FAIL")
               sys.exit(1)
 
-          THRESHOLD = 0.0
-
-          if srs < THRESHOLD:
-              print("❌ SYSTEM FAILURE: Below resilience threshold")
-              sys.exit(1)
-
-          print("✅ SYSTEM STABLE: Resilience OK")
+          print("PASS")
           EOF
 
       # ---------------------------------
-      # 8. Runtime snapshot
+      # 7. Upload Artifact
       # ---------------------------------
-      - name: Runtime Snapshot
-        run: |
-          python --version
-          uname -a
-
-      # ---------------------------------
-      # 9. Upload artifacts (always safe)
-      # ---------------------------------
-      - name: Upload Simulation Results
+      - name: Upload results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: spd-r-resilience-results
+          name: spd-r-ci-results
           path: system_result.json
 
       # ---------------------------------
-      # 10. Auto Tag (ONLY on success)
+      # 8. AUTO CI TAGGING
       # ---------------------------------
-      - name: Auto Tag Release (Self-Versioning)
+      - name: Auto Tag CI Snapshot
         if: success()
         run: |
           set -e
 
-          echo "🔖 Auto-tagging successful CI run..."
-
-          TAG="v1.1.0-auto-$(date +%Y%m%d-%H%M%S)"
-
-          echo "Generated tag: $TAG"
+          TAG="ci-v1.1.0-$(date +%Y%m%d-%H%M%S)"
 
           git config user.name "spd-r-bot"
           git config user.email "spd-r-bot@users.noreply.github.com"
 
-          git tag -a "$TAG" -m "Auto-tag: successful SPD-R resilience CI run"
+          git tag -a "$TAG" -m "CI snapshot"
 
           git push origin "$TAG"
 
-          echo "✅ Tag pushed successfully: $TAG"
+          echo "Tagged: $TAG"
